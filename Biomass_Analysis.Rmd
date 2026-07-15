@@ -104,8 +104,7 @@ elings_data <- elings_data %>%
 ```
 
 
-### Grouping
-
+# Grouping
 ```{r}
 
 # group by plot and sum biomass 
@@ -129,7 +128,6 @@ biomass_plot <- elings_data %>%
 mort_plot <- elings_data %>% 
   group_by(plot_id,treatment) %>% 
   summarise(alive_plants = sum(mort_status, na.rm = TRUE))
-
 #adding proportion
 mort_plot <- elings_data %>%
   group_by(plot_id, treatment) %>%
@@ -156,17 +154,47 @@ biomass_treatment <- elings_data %>%
             se = sd / sqrt(n))
 
 
-# group by treatment and sum mortality
 
+
+# group by treatment and sum mortality
 mort_treatment <- elings_data %>% 
   group_by(treatment) %>% 
   summarise(alive_plants = sum(mort_status, na.rm = TRUE))
+#add pct
+mort_treatment <- elings_data %>% 
+  group_by(treatment) %>% 
+  summarise(alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_prop = mean(mort_status),
+            alive_pct = alive_prop *100)
+
+
+
+
+#group by species biomass and mortality
+species_data <- elings_data %>% 
+  group_by(species_id) %>% 
+  summarise(alive_pl = sum(mortality_status == "A"),
+            dead_pl = sum(mortality_status == "D"),
+            total = alive_pl + dead_pl,
+            alive_prop = alive_pl / total,
+            biomass = sum(biomass_kg_m2),
+            biomass_per_pl = biomass / alive_pl)
+
+#group by species biomass and mortality by treatment
+species_data_treatment <- elings_data %>% 
+  group_by(species_id, treatment) %>% 
+  summarise(alive_pl = sum(mortality_status == "A"),
+            dead_pl = sum(mortality_status == "D"),
+            total = alive_pl + dead_pl,
+            alive_prop = alive_pl / total,
+            biomass = sum(biomass_kg_m2),
+            biomass_per_pl = biomass / alive_pl)
 
 ```
 
 
-### Data exploration
-
+# Data exploration
 Looking at trends in mortality and biomass based on plot and treatment.
 ```{r}
 
@@ -183,6 +211,7 @@ ggplot(data = biomass_plot, aes(x = plot_id, y = biomass_avg, fill = treatment))
   theme_bw() +
   labs(x = "Plot ID",
        y = "Average Biomass (kg/m²)")
+
 
 
 
@@ -209,6 +238,12 @@ ggplot(mort_plot, aes(x = plot_id, y = alive_plants, fill = treatment)) +
   theme_bw() +
   labs(x = "Plot ID",
        y = "Total Number of Live Plants")
+ggplot(mort_plot, aes(x = plot_id, y = alive_pct, fill = treatment)) +
+  geom_col() +
+  scale_y_continuous(limits = c(0, 100)) +
+  theme_bw() +
+  labs(x = "Plot ID",
+      y = "% of Plants Alive")
 
 
 
@@ -219,82 +254,18 @@ ggplot(data = mort_treatment, aes(x = treatment, y = alive_plants, fill = treatm
   theme_bw() +
   labs(x = "Treatment",
        y = "Total Number of Live Plants")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# would like to look at PERCENT plants alive in next analysis
-mort_plot <- elings_data %>%
-  group_by(plot_id, treatment) %>%
-  summarise(
-    total_plants = n(),
-    alive_plants = sum(mort_status),
-    alive_prop = mean(mort_status),
-    alive_pct = alive_prop * 100,
-    .groups = "drop")
-
-ggplot(mort_plot,
-       aes(x = plot_id, y = alive_pct, fill = treatment)) +
+ggplot(data = mort_treatment, aes( x = treatment, y = alive_pct, fill = treatment)) +
   geom_col() +
-  ylim(0, 100) +
+  scale_y_continuous(limits = c(0,100)) +
   theme_bw() +
-  labs(x = "Plot ID",
-       y = "Plants Alive (%)")
-
-
-# adding error bars
-plot_survival <- elings_data %>%
-  group_by(plot_id, treatment) %>%
-  summarise(
-    alive_pct = 100 * mean(mort_status),
-    .groups = "drop")
-
-
-treatment_survival <- plot_survival %>%
-  group_by(treatment) %>%
-  summarise(
-    mean_alive = mean(alive_pct),
-    sd = sd(alive_pct),
-    n = n(),
-    se = sd / sqrt(n),
-    .groups = "drop")
-
-
-ggplot(treatment_survival,
-       aes(x = treatment,
-           y = mean_alive,
-           fill = treatment)) +
-  geom_col() +
-  geom_errorbar(
-    aes(
-      ymin = mean_alive - se,
-      ymax = mean_alive + se), width = 0.2) +
-  theme_bw() +
-  labs(x = "Treatment", y = "Mean Plants Alive (%)")
-
-# I also want to look at average biomass per plant per plot
-# and average biomass per species per treatment
-
+  labs(x = "Treatment",
+       y = "% of Plants Alive")
 
 ```
 
 
-## Continued analysis
-The following code examines the differences in biomass and mortality for species based on region, province, treatment, and plot.
+# Continued analysis
+The following code examines the differences in biomass and mortality for species based on region, province, treatment, and plot. Mkaing tables.
 ```{r}
 
 #calculating % plants alive in each plot
@@ -318,7 +289,6 @@ mulch_filt <- elings_data %>%
                                    across(where(is.character), ~'Total'))) %>% 
   rename(plant_count = n)
 
-#stargazer(mulch_filt, summary = FALSE, type = "text")
 
 #filtering for mortality data and grouping by plot
 plot_filt <- elings_data %>% 
@@ -358,26 +328,29 @@ region_filt <- elings_data %>%
 
 
 
-province_stpu <- elings_data %>% 
-  filter(province_info == "SB" | province_info == "IRV" | province_info == "SD") %>% 
-  filter(species_id == "STPU") %>% 
-  group_by(province_info) %>% 
-  summarise(alive_pl = sum(mortality_status == "A"),
-            dead_pl = sum(mortality_status == "D"),
-            total = alive_pl + dead_pl,
-            alive_prop = alive_pl / total,
-            biomass = sum(biomass_kg_m2),
-            biomass_per_pl = biomass / alive_pl)
+# Stipa province, but not needed anymore 
+#province_stpu <- elings_data %>% 
+ # filter(province_info == "SB" | province_info == "IRV" | province_info == "SD") %>% 
+  #filter(species_id == "STPU") %>% 
+  #group_by(province_info) %>% 
+  #summarise(alive_pl = sum(mortality_status == "A"),
+   #         dead_pl = sum(mortality_status == "D"),
+    #       total = alive_pl + dead_pl,
+    #        alive_prop = alive_pl / total,
+     #       biomass = sum(biomass_kg_m2),
+      #      biomass_per_pl = biomass / alive_pl)
 
-province_stpu %>%
-  kable(caption = "Stipa Pulchra Province Data",
-        col.names = c("Province Info", "# Alive Plants", "# Dead Plants", "Total", "Proportion of plants alive", "Total Biomass kg/m2", "Biomass kg/m2 per plant"),
-        format = "html", table.attr = "style = 'width:80%;'",
-        digits = 2) %>% 
-  kable_styling(bootstrap_options = "striped")
+#province_stpu %>%
+ # kable(caption = "Stipa Pulchra Province Data",
+  #      col.names = c("Province Info", "# Alive Plants", "# Dead Plants", "Total", "Proportion of plants alive", "Total Biomass kg/m2", "Biomass kg/m2 per plant"),
+   #     format = "html", table.attr = "style = 'width:80%;'",
+    #    digits = 2) %>% 
+  #kable_styling(bootstrap_options = "striped")
 
 #stargazer(province_stpu, summary = FALSE, type = "text")  
 
+
+# Province data for EPCA
 province_epca <- elings_data %>% 
   filter(province_info == "SB" | province_info == "IRV" | province_info == "SD") %>% 
   filter(species_id == "EPCA") %>% 
@@ -396,39 +369,47 @@ province_epca %>%
         digits = 2) %>% 
   kable_styling(bootstrap_options = c("hover", "condensed"))
 
-#stargazer(province_epca, type = "text", summary = FALSE)
-
 ```
 
-Now let's plot the filtered data
 
+
+# looking at trends in species data 
 ```{r}
-
-species_data <- elings_data %>% 
-  group_by(species_id) %>% 
-  summarise(alive_pl = sum(mortality_status == "A"),
-            dead_pl = sum(mortality_status == "D"),
-            total = alive_pl + dead_pl,
-            alive_prop = alive_pl / total,
-            biomass = sum(biomass_kg_m2),
-            biomass_per_pl = biomass / alive_pl)
-
+## Species biomass sum
 ggplot(data = species_data, aes(x = species_id, y = biomass)) +
   geom_col() +
   theme_bw() +
   labs(x = "Species", 
-       y = "Average Biomass (kg/m2) per plant")
-  
+       y = "Total Biomass (kg/m2)")
+## Species biomass sum by treatment
+ggplot(data = species_data_treatment, aes(x = species_id, y = biomass, fill = treatment))+
+  geom_col(position = position_dodge(width = 0.9)) +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Total Biomass (kg/m2)")
 
 
+## Species proportion living plants
 ggplot(data = species_data, aes(x = species_id, y = alive_prop)) +
   geom_col() +
   theme_bw() +
   labs(x = "Species",
        y = "Proportion of living plants")
+## Species proportion of living plants by treatment
+ggplot(data = species_data_treatment, aes(x = species_id, y = alive_prop, fill = treatment))+
+  geom_col(position = position_dodge(width = 0.9))+
+  theme_bw() +
+  labs(x = "Species",
+       y = "Proportion of Living Plants")
 
-#stargazer(species_data, type = "html", summary = FALSE)
+```
 
+
+
+
+# plotting species data in a table
+```{r}
+## species table with info
 species_data %>% 
   kable(caption = "Mortality and Biomass data by Species",
         col.names = c("Species", "# Alive Plants", "# Dead Plants", "Total # Plants","Proportion of plants alive", "Total Biomass kg/m2", "Biomass kg/m2 per plant"),
@@ -437,11 +418,12 @@ species_data %>%
         digits = 2,
         na.rm = TRUE) %>% 
   kable_styling(bootstrap_options = c("hover", "condensed"))
-
-
 ```
 
-Adding Error Bars
+
+
+
+# Adding Error Bars to species comparisons
 ```{r}
 
 ## species biomass comparison
