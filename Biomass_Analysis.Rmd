@@ -107,12 +107,7 @@ elings_data <- elings_data %>%
 # Grouping
 ```{r}
 
-# group by plot and sum biomass 
-biomass_plot <- elings_data %>% 
-  group_by(plot_id,
-           treatment) %>% 
-  summarise(biomass_sum = sum(biomass_kg_m2))
-# adding sd and se
+# group by plot and sum biomass AND sd + se
 biomass_plot <- elings_data %>% 
   group_by(plot_id, treatment) %>% 
   summarise(biomass_sum = sum(biomass_kg_m2),
@@ -124,11 +119,7 @@ biomass_plot <- elings_data %>%
 
 
 
-# group by plot and sum mortality
-mort_plot <- elings_data %>% 
-  group_by(plot_id,treatment) %>% 
-  summarise(alive_plants = sum(mort_status, na.rm = TRUE))
-#adding proportion
+# group by plot and sum mortality + adding proportion
 mort_plot <- elings_data %>%
   group_by(plot_id, treatment) %>%
   summarise(alive_plants = sum(mort_status, na.rm = TRUE),
@@ -140,11 +131,7 @@ mort_plot <- elings_data %>%
 
 
 
-# group by treatment and sum biomass
-biomass_treatment <- elings_data %>% 
-  group_by(treatment) %>% 
-  summarise(biomass_sum = sum(biomass_kg_m2))
-#adding sd and se
+# group by treatment and sum biomass + adding sd and se
 biomass_treatment <- elings_data %>%
   group_by(treatment) %>%
   summarise(biomass_sum = sum(biomass_kg_m2),
@@ -156,11 +143,7 @@ biomass_treatment <- elings_data %>%
 
 
 
-# group by treatment and sum mortality
-mort_treatment <- elings_data %>% 
-  group_by(treatment) %>% 
-  summarise(alive_plants = sum(mort_status, na.rm = TRUE))
-#add pct
+# group by treatment and sum mortality + add pct
 mort_treatment <- elings_data %>% 
   group_by(treatment) %>% 
   summarise(alive_plants = sum(mort_status, na.rm = TRUE),
@@ -407,7 +390,7 @@ ggplot(data = species_data_treatment, aes(x = species_id, y = alive_prop, fill =
 
 
 
-# plotting species data in a table
+# plotting species data in a table ********to be trouble shooted
 ```{r}
 ## species table with info
 species_data %>% 
