@@ -32,3 +32,29 @@ library(stargazer) #helps make pretty tables to show data in knitted html or to 
 library(lubridate) #helps R recognize dates
 library(kableExtra)
 ```
+
+
+## Introduction
+
+
+
+
+
+# Reading in the data
+```{r}
+
+elings_data <- read.csv(here("ElingsMonitoringData_all.csv")) %>% 
+  clean_names() %>% 
+  filter(species_id != "EMPTY") %>% 
+  rename(width1_cm = width1_cm_widest_diameter, # changing column names to be less annoying
+         width2_cm = width2_cm_perpendicular_to_w1_measurement) %>% 
+  mutate(width1_m = width1_cm/100,  #making a width column in meters instead of cm
+         width2_m = width2_cm/100,
+         height2_m = height_cm) %>% 
+  mutate(mort_status = case_when(mortality_status == "A" ~ "1",
+                                      mortality_status == "D" ~ "0"))
+
+
+```
+
+
