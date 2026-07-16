@@ -1,5 +1,5 @@
 ---
-title: "Changes Over Time"
+title: "Trend Across Time"
 author: "breanna"
 date: "2026-07-15"
 output: 
@@ -31,11 +31,14 @@ library(dplyr) #helps with data analysis
 library(stargazer) #helps make pretty tables to show data in knitted html or to save as png
 library(lubridate) #helps R recognize dates
 library(kableExtra)
+library(ggplot2)
 ```
 
 
 ## Introduction
+This code aims to synthesize and visualize data collected on Biomass (kg/m2) and Mortality of plants in the Elings Park Restoration Project. The Santa Barbara Botanic Garden, in partnership with Channel Islands Restoration, is transforming a 1-acre plot of land previously full of invasive weeds, into a better-functioning native habitat.
 
+In this analysis, we explore the relationship between different weed treatments (sheet mulching and plastic tarping) and plant mortality and growth ACROSS TIME.
 
 
 
@@ -51,10 +54,192 @@ elings_data <- read.csv(here("ElingsMonitoringData_all.csv")) %>%
   mutate(width1_m = width1_cm/100,  #making a width column in meters instead of cm
          width2_m = width2_cm/100,
          height2_m = height_cm) %>% 
-  mutate(mort_status = case_when(mortality_status == "A" ~ "1",
-                                      mortality_status == "D" ~ "0"))
+  mutate(mort_status = case_when(mortality_status == "A" ~ 1,
+                                      mortality_status == "D" ~ 0))
 
 
 ```
 
+
+# Grouping data
+```{r}
+
+biomass_time_treatment <- elings_data %>% 
+  group_by(date, treatment) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_kg_m2, na.rm = TRUE),
+            sd = sd(biomass_kg_m2, na.rm = TRUE),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+
+biomass_time_plot <- elings_data %>% 
+  group_by(date, plot_id) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_kg_m2, na.rm = TRUE),
+            sd = sd(biomass_kg_m2, na.rm = TRUE),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+
+mortality_time_treatment <- elings_data %>% 
+  group_by(date, treatment) %>% 
+  summarise(alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_prop = alive_plants/total_plants,
+            alive_pct = alive_prop * 100,
+            .groups = "drop")
+
+
+mortality_time_plot <- elings_data %>% 
+  group_by(date, plot_id) %>% 
+  summarise(alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_prop = alive_plants/total_plants,
+            alive_pct = alive_prop * 100,
+            .groups = "drop")
+
+```
+
+
+#Plotting Biomass Treatment Data
+```{r}
+## mean biomass over time, by treatment
+ggplot(biomass_time_treatment,
+       aes( x = date,
+            y = mean_biomass,
+            color = treatment,
+            group = treatment)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_biomass - se, 
+                    ymax = mean_biomass + se),
+                width = 0.2) +
+  theme_bw() +
+  labs( x = "Monitoring Date",
+        y = "Mean Biomass (kg/m2)",
+        color = "Treatment")
+
+
+## total biomass over time, by treatment
+ggplot(biomass_time_treatment, 
+       aes(x = date, 
+           y = biomass_sum,
+           color = treatment, 
+           group = treatment)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs( x = "Monitoring Date",
+        y = "Total Biomass (kg/m2)",
+        color = "Treatment")
+
+
+```
+
+
+#Plotting Biomass Plot ID Data
+```{r}
+
+## mean biomass over time, by plot
+ggplot(biomass_time_plot,
+       aes( x = date,
+            y = mean_biomass,
+            color = plot_id,
+            group = plot_id)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_biomass - se, 
+                    ymax = mean_biomass + se),
+                width = 0.2) +
+  theme_bw() +
+  labs( x = "Monitoring Date",
+        y = "Mean Biomass (kg/m2)",
+        color = "Plot")
+        
+
+## total biomass over time, by plot 
+ggplot(biomass_time_plot,
+       aes(x = date,
+           y = biomass_sum,
+           color = plot_id,
+           group = plot_id)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw()+
+  labs(x = "Monitoring Date",
+       y = "Total Biomass (kg/m2)")
+```
+
+
+#Plotting Mortality Treatment Data 
+```{r}
+
+## total alive plants by treatment, over time
+ggplot(mortality_time_treatment,
+       aes(x = date,
+           y = alive_plants,
+           color = treatment, 
+           group = treatment)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(x = "Monitoring Date",
+       y = "Total Alive Plants") +
+  scale_y_continuous(limits = c(0,750))
+
+
+## proportion of alive plants by treatment, over time
+ggplot(mortality_time_treatment,
+       aes(x = date,
+           y = alive_prop,
+           color = treatment, 
+           group = treatment)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(x = "Monitoring Date",
+       y = "Proportion of Alive Plants") +
+  scale_y_continuous(limits = c(0,1.0))
+
+
+
+```
+
+
+#Plotting Mortality Plot Data
+```{r}
+
+
+## total alive plants by plot, over time
+ggplot(mortality_time_plot,### PLOT A HAS WEIRD DATA LOOK INTO IT
+       aes(x = date,
+           y = alive_plants,
+           color = plot_id, 
+           group = plot_id)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(x = "Monitoring Date",
+       y = "Total Alive Plants") +
+  scale_y_continuous(limits = c(0,270))
+
+
+
+## proportion of alive plants by plot, over time
+ggplot(mortality_time_plot,
+       aes(x = date,
+           y = alive_prop,
+           color = plot_id, 
+           group = plot_id)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(x = "Monitoring Date",
+       y = "Proportion of Alive Plants") +
+  scale_y_continuous(limits = c(0,1))
+
+```
 
