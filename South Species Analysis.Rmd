@@ -58,5 +58,35 @@ elings_data <- read.csv(here("ElingsMonitoringData_all.csv")) %>%
   mutate(mort_status = case_when(mortality_status == "A" ~ 1,
                                       mortality_status == "D" ~ 0))
 
+
+
+elings_data$date <- as.Date(elings_data$date)
+
+class(elings_data$date)
+
+elings_data <- elings_data %>% 
+  filter(date > "2026-02-01")
+
 ```
 
+#grouping data
+```{r}
+#southern species only
+south_species <- elings_data %>%
+  filter(region == "south") %>% 
+  group_by(species_id) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_kg_m2, na.rm = TRUE),
+            alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_pct = alive_plants/total_plants *100,
+            .groups = "drop")
+
+
+
+#southern and selected local species
+
+
+
+
+```
