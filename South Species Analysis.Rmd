@@ -69,6 +69,7 @@ elings_data <- elings_data %>%
 
 ```
 
+
 #grouping data
 ```{r}
 #southern species only
@@ -85,8 +86,87 @@ south_species <- elings_data %>%
 
 
 #southern and selected local species
+south_local_species <- elings_data %>% 
+  arrange(region, species_id, treatment) %>% 
+  filter((region == "central" & species_id %in% c("ARCA", "BAPI", "BOBA", "BRCA", "ERFA", "LECO")) |
+           region == "south") %>% 
+  group_by(region, species_id, treatment) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_kg_m2, na.rm = TRUE),
+            alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_pct = alive_plants/total_plants *100,
+            .groups = "drop")
 
 
+```
+
+
+#plotting data
+```{r}
+ggplot(south_local_species,
+       aes(x = species_id,
+           y = mean_biomass,
+           fill = treatment,
+           group = treatment)) +
+  geom_col() +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Mean Biomass (kg/m2")
+      # color = "Treatment")
+  
+
+
+
+ggplot(south_local_species,
+       aes(x = species_id,
+           y = mean_biomass,
+           fill = region)) +
+  geom_col() +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Mean Biomass (kg/m2")
+  
+
+
+ggplot(south_local_species,
+       aes(x = species_id,
+           y = mean_biomass,
+           fill = treatment,
+           group = treatment)) +
+  geom_col() +
+  facet_wrap() +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Mean Biomass (kg/m2",
+       color = "Treatment")
+
+
+
+
+
+```
+
+
+#groupping over time
+```{r}
+region_compare <- elings_data %>%
+  group_by(date, region) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_sum),
+            alive_plants = sum(mort_status, na.rm = TRUE),
+            total_plants = n(),
+            alive_pct = alive_plants/total_plants *100,
+            .groups = "drop")
+
+biomass_time_treatment <- elings_data %>% 
+  group_by(date, treatment) %>% 
+  summarise(biomass_sum = sum(biomass_kg_m2),
+            mean_biomass = mean(biomass_kg_m2, na.rm = TRUE),
+            sd = sd(biomass_kg_m2, na.rm = TRUE),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
 
 
 ```
