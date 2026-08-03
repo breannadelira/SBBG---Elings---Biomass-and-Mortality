@@ -34,7 +34,6 @@ library(kableExtra)
 ```
 
 ## Introduction:
-how
 This code aims to synthesize and visualize data collected on Biomass (kg/m2) and Mortality of plants in the Elings Park Restoration Project. The Santa Barbara Botanic Garden, in partnership with Channel Islands Restoration, is transforming a 1-acre plot of land previously full of invasive weeds, into a better-functioning native habitat.
 
 In this analysis, we explore the relationship between different weed treatments (sheet mulching and plastic tarping) and plant mortality and growth. 
