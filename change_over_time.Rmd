@@ -101,6 +101,7 @@ mortality_time_plot <- elings_data %>%
             alive_pct = alive_prop * 100,
             .groups = "drop")
 
+
 ```
 
 
@@ -135,7 +136,6 @@ ggplot(biomass_time_treatment,
   labs( x = "Monitoring Date",
         y = "Total Biomass (kg/m2)",
         color = "Treatment")
-
 
 ```
 
