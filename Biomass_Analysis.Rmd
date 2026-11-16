@@ -83,7 +83,7 @@ elings_data <- read.csv(here("ElingsMonitoringData_2026July.csv")) %>%
 class(elings_data$mortality_status)
 
 elings_data$mort_status <- as.numeric(elings_data$mort_status)
-
+ 
 class(elings_data$mort_status)
 
 elings_data$date_lbd <- parse_date_time(elings_data$date, "ymd") 
@@ -200,9 +200,12 @@ ggplot(data = biomass_plot, aes(x = plot_id, y = biomass_avg, fill = treatment))
 # graphing biomass by treatment
 ggplot(data = biomass_treatment, aes(x = treatment, y = biomass_sum, fill = treatment)) +
   geom_col() +
+  scale_fill_manual(values = c("mulch" = "#254E2B",
+                               "tarp" = "#F2E80A")) +
   theme_bw() +
   labs(x = "Treatment",
-       y = "Total Biomass (kg/m²)")
+       y = "Total Biomass (kg/m²)",
+       title = "Biomass by Treatment")
 #average biomass by treatment with error bars
 ggplot(data = biomass_treatment, aes(x = treatment, y = biomass_avg, fill = treatment)) +
   geom_col() +
@@ -384,6 +387,166 @@ ggplot(data = species_data_treatment, aes(x = species_id, y = alive_prop, fill =
   labs(x = "Species",
        y = "Proportion of Living Plants")
 
+```
+
+
+# making the previous graphs horizontal and adding common names and garden colors
+```{r}
+species_data %>%
+  filter(species_id != "N/A") %>%
+  ggplot(aes(x = reorder(species_id, +biomass),
+                         y = biomass)) +
+  geom_col(fill = "#254E2B") +
+  scale_x_discrete(labels = c(
+  "STPU" = "Purple Needlegrass",
+  "BRCA" = "CA Brickell Bush",
+  "CAMA" = "Coast Morning Glory", 
+  "COFI" = "CA Aster",
+  "EPCA" = "CA Fuchsia",
+  "GRCA" = "Gumplant",
+  "LECO" = "Giant Wild Rye",
+  "SODO" = "Green-Spot Nightshade",
+  "SPAM" = "Desert Mallow",
+  "ACGL" = "Deerweed",
+  "AGSH" = "Shaw's Agave",
+  "ARCA" = "CA Sagebrush",
+  "ATLE" = "Saltbush",
+  "BAPI" = "Coyotebush",
+  "BEEM" = "Golden Spined Cereus",
+  "ENCA" = "Coast Sunflower",
+  "ERFA" = "CA Buckwheat",
+  "EUMI" = "Cliff Spurge",
+  "HEWH" = "Chaparral Yucca",
+  "ISME" = "Coast Goldenbush",
+  "LEGI" = "Giant Coreopsis",
+  "LYCA" = "CA Boxthorn",
+  "PEAR" = "Bladderbod",
+  "RHIN" = "Lemonade Berry",
+  "SAAP" = "White Sage",
+  "SAME" = "Black Sage",
+  "AMFR" = "False Indigo",
+  "BOBA" = "Cane Bluestem")) +
+  coord_flip() +
+  theme_bw() +
+  labs(title = "Total Species Biomass",
+       x = "Species", 
+       y = "Total Biomass (kg/m2)")
+
+
+
+
+
+
+## Same as above but with mortality data instead of biomass data
+
+species_data %>%
+  filter(species_id != "N/A") %>%
+  ggplot(aes(x = reorder(species_id, +alive_prop),
+                         y = alive_prop)) +
+  geom_col(fill = "#254E2B") +
+  scale_x_discrete(labels = c(
+  "STPU" = "Purple Needlegrass",
+  "BRCA" = "CA Brickell Bush",
+  "CAMA" = "Coast Morning Glory", 
+  "COFI" = "CA Aster",
+  "EPCA" = "CA Fuchsia",
+  "GRCA" = "Gumplant",
+  "LECO" = "Giant Wild Rye",
+  "SODO" = "Green-Spot Nightshade",
+  "SPAM" = "Desert Mallow",
+  "ACGL" = "Deerweed",
+  "AGSH" = "Shaw's Agave",
+  "ARCA" = "CA Sagebrush",
+  "ATLE" = "Saltbush",
+  "BAPI" = "Coyotebush",
+  "BEEM" = "Golden Spined Cereus",
+  "ENCA" = "Coast Sunflower",
+  "ERFA" = "CA Buckwheat",
+  "EUMI" = "Cliff Spurge",
+  "HEWH" = "Chaparral Yucca",
+  "ISME" = "Coast Goldenbush",
+  "LEGI" = "Giant Coreopsis",
+  "LYCA" = "CA Boxthorn",
+  "PEAR" = "Bladderbod",
+  "RHIN" = "Lemonade Berry",
+  "SAAP" = "White Sage",
+  "SAME" = "Black Sage",
+  "AMFR" = "False Indigo",
+  "BOBA" = "Cane Bluestem")) +
+  coord_flip() +
+  theme_bw() +
+  labs(title = "% Survival By Species",
+       x = "Species", 
+       y = "% Survival")
+
+
+## Species biomass sum
+ggplot(data = species_data, aes(x = species_id, y = biomass)) +
+  geom_col() +
+  theme_bw() +
+  labs(x = "Species", 
+       y = "Total Biomass (kg/m2)")
+
+
+
+## Species proportion living plants
+ggplot(data = species_data, aes(x = species_id, y = alive_prop)) +
+  geom_col() +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Proportion of living plants")
+
+
+
+### trying beefiness scatterplot
+beefiness <- elings_data %>% 
+  group_by(species_id) %>% 
+  summarise(total_plants = n(),
+            plants_alive = sum(mort_status, na.rm = TRUE),
+            survival_pct = mean(mort_status, na.rm = TRUE),
+            biomass_sum = sum(biomass_kg_m2),
+            beef = survival_pct * biomass_sum)
+
+
+beefiness %>% 
+  filter(species_id != "N/A") %>% 
+  ggplot(aes (x = reorder(species_id, +beef),
+                       y = beef)) +
+  geom_point(fill = "#254e2b") +
+   scale_x_discrete(labels = c(
+  "STPU" = "Purple Needlegrass",
+  "BRCA" = "CA Brickell Bush",
+  "CAMA" = "Coast Morning Glory", 
+  "COFI" = "CA Aster",
+  "EPCA" = "CA Fuchsia",
+  "GRCA" = "Gumplant",
+  "LECO" = "Giant Wild Rye",
+  "SODO" = "Green-Spot Nightshade",
+  "SPAM" = "Desert Mallow",
+  "ACGL" = "Deerweed",
+  "AGSH" = "Shaw's Agave",
+  "ARCA" = "CA Sagebrush",
+  "ATLE" = "Saltbush",
+  "BAPI" = "Coyotebush",
+  "BEEM" = "Golden Spined Cereus",
+  "ENCA" = "Coast Sunflower",
+  "ERFA" = "CA Buckwheat",
+  "EUMI" = "Cliff Spurge",
+  "HEWH" = "Chaparral Yucca",
+  "ISME" = "Coast Goldenbush",
+  "LEGI" = "Giant Coreopsis",
+  "LYCA" = "CA Boxthorn",
+  "PEAR" = "Bladderbod",
+  "RHIN" = "Lemonade Berry",
+  "SAAP" = "White Sage",
+  "SAME" = "Black Sage",
+  "AMFR" = "False Indigo",
+  "BOBA" = "Cane Bluestem")) +
+  coord_flip() +
+  theme_bw() +
+  labs(x = "Species", 
+       y = "Survival Rate * Total Biomass",
+       title = "Surivival Rate * Total Biomass by Species")
 ```
 
 

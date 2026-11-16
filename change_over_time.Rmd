@@ -132,10 +132,16 @@ ggplot(biomass_time_treatment,
            group = treatment)) +
   geom_line(linewidth = 1.0) +
   geom_point(size = 3) +
+  scale_color_manual( values = c("mulch" = "#C2D6D4", "tarp" = "#F2E80A"))+
+  scale_x_date(date_labels = "%B %Y")+
   theme_bw() +
-  labs( x = "Monitoring Date",
+  labs(title = "Biomass by Treatment Over Time",
+       x = "Monitoring Date",
         y = "Total Biomass (kg/m2)",
         color = "Treatment")
+
+biomass_time_treatment <- biomass_time_treatment %>%
+  mutate(date = as.Date(date))
 
 ```
 
