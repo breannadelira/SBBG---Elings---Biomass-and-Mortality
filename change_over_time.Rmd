@@ -67,7 +67,8 @@ elings_data <- elings_data %>%
   filter(!is.na(species_id),
          species_id != "N/A",
          species_id != "EMTPY",
-         species_id != "ATPU")
+         species_id != "ATPU",
+         species_id != "SAME")
 
 
 biomass_time_treatment <- elings_data %>% 
@@ -107,17 +108,15 @@ mortality_time_plot <- elings_data %>%
             alive_pct = alive_prop * 100,
             .groups = "drop")
 
+
 height_species <- elings_data %>% 
   group_by(date, species_id) %>% 
   summarise(total_height = sum(height_cm, na.rm = TRUE),
-             avg_height = mean(height_cm, na.rm = TRUE))
-#removing unwanted data
-height_species <- height_species %>% 
-  filter(!is.na(species_id),
-         species_id != "N/A",
-         species_id != "EMTPY",
-         species_id != "ATPU")
-
+            avg_height = mean(height_cm, na.rm = TRUE),
+            sd = sd(height_cm, na.rm = TRUE),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
 
 ```
 
@@ -269,52 +268,102 @@ ggplot(mortality_time_plot,
 
 #Plotting height over time
 ```{r}
-#total height by species
-ggplot(height_species, aes(x = species_id,
-                           y = total_height)) +
-  geom_line(linewidth = 1.0) +
-  geom_point(size = 3) +
-  theme_bw() +
-  labs(x = "Species",
-       y = "Total Height",
-       title = "Species Height over Time")
-
 #avg height by species
-ggplot(height_species, aes(x = species_id, 
+ggplot(height_species, aes(x = reorder(species_id, +avg_height),
                            y = avg_height)) +
-  geom_line(linewidth = 1.0) +
-  geom_point(size = 3) +
+  geom_line(linewidth = 0.5, fill = ) +
+  geom_point(size = 2) +
+   scale_x_discrete(labels = c(
+  "STPU" = "Purple Needlegrass",
+  "BRCA" = "CA Brickell Bush",
+  "CAMA" = "Coast Morning Glory", 
+  "COFI" = "CA Aster",
+  "EPCA" = "CA Fuchsia",
+  "GRCA" = "Gumplant",
+  "LECO" = "Giant Wild Rye",
+  "SODO" = "Green-Spot Nightshade",
+  "SPAM" = "Desert Mallow",
+  "ACGL" = "Deerweed",
+  "AGSH" = "Shaw's Agave",
+  "ARCA" = "CA Sagebrush",
+  "ATLE" = "Saltbush",
+  "BAPI" = "Coyotebush",
+  "BEEM" = "Golden Spined Cereus",
+  "ENCA" = "Coast Sunflower",
+  "ERFA" = "CA Buckwheat",
+  "EUMI" = "Cliff Spurge",
+  "HEWH" = "Chaparral Yucca",
+  "ISME" = "Coast Goldenbush",
+  "LEGI" = "Giant Coreopsis",
+  "LYCA" = "CA Boxthorn",
+  "PEAR" = "Bladderbod",
+  "RHIN" = "Lemonade Berry",
+  "SAAP" = "White Sage",
+  "SAME" = "Black Sage",
+  "AMFR" = "False Indigo",
+  "BOBA" = "Cane Bluestem")) +
   theme_bw() +
+  coord_flip() +
    labs(x = "Species",
-       y = "Average Heigh (cm)",
+       y = "Average Height (cm)",
        title = "Species Average Height over Time")
 
-#Formatting differently and only 1st and last round
+#Formatting differently and only 1st and last round, flip vert, high to low
 height_comparison <- height_species %>%
   filter(date %in% as.Date(c("2024-02-15", "2026-06-29")))
-  
-ggplot(height_comparison, aes(x = factor(species_id, levels = species_order),
-    y = avg_height,
-    fill = as.factor(date))) +
-  geom_col(position = "dodge") +
-  theme_bw() +
-  labs(x = "Species",
-       y = "Average Height (cm)",
-       fill = "Monitoring Date",
-       title = "Species Average Height: 2024 vs. 2026") +
-  coord_flip() +
-  scale_fill_manual(values = c("#254E2B", "#C2D6D4"),
-                    labels = c("February 2024", "June 2026"))
 
 
 species_order <- height_comparison %>%
   filter(date == as.Date("2026-06-29")) %>%
   arrange(avg_height) %>%
-  pull(species_id)
+  pull(species_id)  
 
-aes(x = factor(species_id, levels = species_order),
-    y = avg_height,
-    fill = as.factor(date))
+
+ggplot(height_comparison, aes(x = factor(species_id, levels = species_order),
+                              y = avg_height,
+                              fill = as.factor(date))) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = avg_height - se, 
+                    ymax = avg_height + se),
+                width = 0.2) +
+  scale_x_discrete(labels = c(
+  "STPU" = "Purple Needlegrass",
+  "BRCA" = "CA Brickell Bush",
+  "CAMA" = "Coast Morning Glory", 
+  "COFI" = "CA Aster",
+  "EPCA" = "CA Fuchsia",
+  "GRCA" = "Gumplant",
+  "LECO" = "Giant Wild Rye",
+  "SODO" = "Green-Spot Nightshade",
+  "SPAM" = "Desert Mallow",
+  "ACGL" = "Deerweed",
+  "AGSH" = "Shaw's Agave",
+  "ARCA" = "CA Sagebrush",
+  "ATLE" = "Saltbush",
+  "BAPI" = "Coyotebush",
+  "BEEM" = "Golden Spined Cereus",
+  "ENCA" = "Coast Sunflower",
+  "ERFA" = "CA Buckwheat",
+  "EUMI" = "Cliff Spurge",
+  "HEWH" = "Chaparral Yucca",
+  "ISME" = "Coast Goldenbush",
+  "LEGI" = "Giant Coreopsis",
+  "LYCA" = "CA Boxthorn",
+  "PEAR" = "Bladderbod",
+  "RHIN" = "Lemonade Berry",
+  "SAAP" = "White Sage",
+  "SAME" = "Black Sage",
+  "AMFR" = "False Indigo",
+  "BOBA" = "Cane Bluestem")) +
+  theme_bw() +  
+  coord_flip() +
+  scale_fill_manual(values = c("#254E2B", "#C2D6D4"),
+                    labels = c("February 2024", "June 2026")) +
+  labs(x = "Species",
+       y = "Average Height (cm)",
+       fill = "Monitoring Date",
+       title = "Species Average Height: 2024 vs. 2026")
+
 
 ```
 
