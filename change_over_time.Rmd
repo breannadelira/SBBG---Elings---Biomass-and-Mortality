@@ -148,10 +148,10 @@ ggplot(biomass_time_treatment,
            group = treatment)) +
   geom_line(linewidth = 1.0) +
   geom_point(size = 3) +
-  scale_color_manual( values = c("mulch" = "#C2D6D4", "tarp" = "#F2E80A"))+
+  scale_color_manual( values = c("mulch" = "#C2D6D4", "tarp" = "#254E2B"))+
   scale_x_date(date_labels = "%B %Y")+
   theme_bw() +
-  labs(title = "Biomass by Treatment Over Time",
+  labs(title = "Biomass Over Time per Treatment",
        x = "Monitoring Date",
         y = "Total Biomass (kg/m2)",
         color = "Treatment")
@@ -223,7 +223,8 @@ ggplot(mortality_time_treatment,
   geom_point(size = 3) +
   theme_bw() +
   labs(x = "Monitoring Date",
-       y = "Proportion of Alive Plants") +
+       y = "Proportion of Plants Alive",
+       title = "Proportion of Plants Alive Over Time") +
   scale_y_continuous(limits = c(0,1.0))
 
 
@@ -271,9 +272,8 @@ ggplot(mortality_time_plot,
 #avg height by species
 ggplot(height_species, aes(x = reorder(species_id, +avg_height),
                            y = avg_height)) +
-  geom_line(linewidth = 0.5, fill = ) +
-  geom_point(size = 2) +
-   scale_x_discrete(labels = c(
+  geom_line(linewidth = 0.5) +
+  scale_x_discrete(labels = c(
   "STPU" = "Purple Needlegrass",
   "BRCA" = "CA Brickell Bush",
   "CAMA" = "Coast Morning Glory", 
