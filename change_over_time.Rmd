@@ -63,6 +63,12 @@ elings_data <- read.csv(here("ElingsMonitoringData_all.csv")) %>%
 
 # Grouping data
 ```{r}
+elings_data <- elings_data %>% 
+  filter(!is.na(species_id),
+         species_id != "N/A",
+         species_id != "EMTPY",
+         species_id != "ATPU")
+
 
 biomass_time_treatment <- elings_data %>% 
   group_by(date, treatment) %>% 
@@ -105,6 +111,12 @@ height_species <- elings_data %>%
   group_by(date, species_id) %>% 
   summarise(total_height = sum(height_cm, na.rm = TRUE),
              avg_height = mean(height_cm, na.rm = TRUE))
+#removing unwanted data
+height_species <- height_species %>% 
+  filter(!is.na(species_id),
+         species_id != "N/A",
+         species_id != "EMTPY",
+         species_id != "ATPU")
 
 
 ```
@@ -277,7 +289,32 @@ ggplot(height_species, aes(x = species_id,
        y = "Average Heigh (cm)",
        title = "Species Average Height over Time")
 
+#Formatting differently and only 1st and last round
+height_comparison <- height_species %>%
+  filter(date %in% as.Date(c("2024-02-15", "2026-06-29")))
+  
+ggplot(height_comparison, aes(x = factor(species_id, levels = species_order),
+    y = avg_height,
+    fill = as.factor(date))) +
+  geom_col(position = "dodge") +
+  theme_bw() +
+  labs(x = "Species",
+       y = "Average Height (cm)",
+       fill = "Monitoring Date",
+       title = "Species Average Height: 2024 vs. 2026") +
+  coord_flip() +
+  scale_fill_manual(values = c("#254E2B", "#C2D6D4"),
+                    labels = c("February 2024", "June 2026"))
 
+
+species_order <- height_comparison %>%
+  filter(date == as.Date("2026-06-29")) %>%
+  arrange(avg_height) %>%
+  pull(species_id)
+
+aes(x = factor(species_id, levels = species_order),
+    y = avg_height,
+    fill = as.factor(date))
 
 ```
 
